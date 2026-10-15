@@ -23,9 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (count($errors) === 0) {
-        if (getUserByUsername($username) !== false || !registerUser($username, $password)) {
+        if (getUserByUsername($username) !== false) {
             $errors[] = 'Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.';
         } else {
+            registerUser($username, $password);
             $_SESSION['message'] = 'Đăng ký thành công. Bạn có thể đăng nhập.';
             header('Location: login.php');
             exit;

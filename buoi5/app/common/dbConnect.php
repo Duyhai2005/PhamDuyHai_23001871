@@ -8,15 +8,14 @@ function getConnection()
         return $connection;
     }
 
-    $host = getenv('DB_HOST') ?: 'localhost';
-    $port = getenv('DB_PORT') ?: '3306';
-    $database = getenv('DB_NAME') ?: 'shopping_cart';
-    $username = getenv('DB_USER') === false ? 'root' : getenv('DB_USER');
-    $password = getenv('DB_PASSWORD') === false ? '' : getenv('DB_PASSWORD');
+    $host = 'localhost';
+    $database = 'shopping_cart';
+    $username = 'root';
+    $password = '';
 
     try {
         $connection = new PDO(
-            "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4",
+            "mysql:host=$host;dbname=$database;charset=utf8mb4",
             $username,
             $password,
             [
