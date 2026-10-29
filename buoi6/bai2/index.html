@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 2 - Đặt vé xem phim</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f2f5fa; color: #17243b; font-family: Arial, sans-serif; line-height: 1.5; }
+    main { max-width: 700px; margin: 40px auto; padding: 0 18px; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 8px 30px #1b335314; padding: 28px; }
+    .eyebrow { color: #4364cc; font-weight: bold; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 4px 0 6px; font-size: 1.8rem; }
+    .intro { margin: 0 0 24px; color: #56657a; }
+    label, legend { font-weight: bold; }
+    .field { margin-bottom: 18px; }
+    .field > label { display: block; margin-bottom: 6px; }
+    input[type="text"], select, input[type="number"] { font: inherit; color: inherit; border: 1px solid #bbc7d6; border-radius: 8px; padding: 10px 12px; }
+    input[type="text"], select { width: 100%; }
+    input:focus, select:focus, button:focus-visible { outline: 3px solid #aec4ff; outline-offset: 2px; }
+    fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+    legend { margin-bottom: 8px; }
+    .choices { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+    .choices label, .combo { font-weight: normal; }
+    .quantity { display: flex; align-items: center; gap: 8px; }
+    .quantity input { width: 85px; text-align: center; }
+    button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 10px 16px; }
+    .step { background: #eaf0ff; color: #2449ad; font-size: 1.2rem; width: 42px; }
+    .hint { color: #65758b; font-size: .9rem; margin: 5px 0 0; }
+    .total { display: flex; justify-content: space-between; align-items: center; margin: 24px 0; padding: 16px; background: #eef3ff; border-radius: 10px; gap: 10px; }
+    .total strong { color: #234ab0; font-size: 1.25rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .primary { background: #3158c8; color: white; font-weight: bold; }
+    .primary:disabled { background: #aebbd5; cursor: not-allowed; }
+    .secondary { background: #e9edf4; color: #24354d; }
+    .confirmation { margin-top: 22px; padding: 16px; background: #e8f7ee; border: 1px solid #acd9bc; border-radius: 10px; }
+    .confirmation h2 { font-size: 1.1rem; margin: 0 0 8px; }
+    .confirmation p { margin: 4px 0; }
+    [v-cloak] { display: none; }
+    @media (max-width: 480px) { main { margin: 20px auto; } .card { padding: 20px; } .total { align-items: flex-start; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <main id="app" v-cloak>
+    <div class="card">
+      <div class="eyebrow">Bài thực hành 06 · Bài 2</div>
+      <h1>Đặt vé xem phim</h1>
+      <p class="intro">Chọn suất chiếu và loại vé để xem tổng tiền trước khi đặt.</p>
+      <form @submit.prevent="datVe">
+        <div class="field">
+          <label for="ho-ten">Họ và tên</label>
+          <input id="ho-ten" type="text" v-model.trim="hoTen" placeholder="Nhập họ và tên" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="suat-chieu">Suất chiếu</label>
+          <select id="suat-chieu" v-model="suatChieu">
+            <option value="09:00">09:00</option>
+            <option value="14:00">14:00</option>
+            <option value="19:00">19:00</option>
+          </select>
+        </div>
+        <fieldset>
+          <legend>Loại vé</legend>
+          <div class="choices">
+            <label><input type="radio" v-model="loaiVe" value="thuong"> Thường · 70.000 đồng</label>
+            <label><input type="radio" v-model="loaiVe" value="vip"> VIP · 100.000 đồng</label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="so-luong">Số lượng vé</label>
+          <div class="quantity">
+            <button class="step" type="button" @click="giam" aria-label="Giảm số lượng vé">−</button>
+            <input id="so-luong" type="number" v-model.number="soLuong" min="1" max="10" step="1" required>
+            <button class="step" type="button" @click="tang" aria-label="Tăng số lượng vé">+</button>
+          </div>
+          <p class="hint">Chọn từ 1 đến 10 vé.</p>
+        </div>
+        <label class="combo"><input type="checkbox" v-model="combo"> Thêm combo bắp nước · 45.000 đồng / đơn</label>
+        <div class="total"><span>Tổng tiền</span><strong>{{ dinhDangTien(tongTien) }}</strong></div>
+        <div class="actions">
+          <button class="primary" type="submit" :disabled="!hopLe">Đặt vé</button>
+          <button class="secondary" type="button" @click="datLai">Đặt lại</button>
+        </div>
+      </form>
+      <section v-if="xacNhan" class="confirmation" role="status" aria-live="polite">
+        <h2>Đặt vé thành công!</h2>
+        <p>Khách hàng: <strong>{{ xacNhan.hoTen }}</strong></p>
+        <p>Suất chiếu: {{ xacNhan.suatChieu }} · Vé {{ xacNhan.loaiVe }} · {{ xacNhan.soLuong }} vé</p>
+        <p>Combo bắp nước: {{ xacNhan.combo ? 'Có' : 'Không' }}</p>
+        <p>Tổng tiền: <strong>{{ dinhDangTien(xacNhan.tongTien) }}</strong></p>
+      </section>
+    </div>
+  </main>
+  <script src="https://unpkg.com/vue@3.5.44/dist/vue.global.prod.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
+

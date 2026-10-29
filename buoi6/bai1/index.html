@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 1 - Thông tin sinh viên</title>
+  <script src="https://unpkg.com/vue@3.5.44/dist/vue.global.prod.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #eef3f8; color: #233247; font-family: Arial, sans-serif; line-height: 1.5; }
+    main { max-width: 680px; margin: 48px auto; padding: 0 20px; }
+    h1 { margin: 0 0 6px; font-size: 1.8rem; }
+    .subtitle { margin: 0 0 24px; color: #5c6f83; }
+    .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px #23324714; }
+    .profile { display: flex; align-items: center; gap: 22px; }
+    .avatar { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; background: #e3efff; }
+    h2 { margin: 0 0 4px; font-size: 1.5rem; }
+    .id { margin: 0; color: #61748a; }
+    dl { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 28px 0; }
+    dt { color: #61748a; font-size: .9rem; }
+    dd { margin: 3px 0 0; font-weight: 600; }
+    .excellent { color: #168053; }
+    .good { color: #176ab7; }
+    .average { color: #a76500; }
+    .poor { color: #bb3434; }
+    button { border: 0; border-radius: 8px; background: #245db5; color: white; padding: 10px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+    button:hover { background: #174987; }
+    button:focus-visible { outline: 3px solid #83b6ff; outline-offset: 3px; }
+    .intro { margin: 18px 0 0; padding: 16px; background: #f3f7fc; border-radius: 8px; }
+    [v-cloak] { display: none; }
+    @media (max-width: 480px) { main { margin: 24px auto; } .card { padding: 20px; } .profile { align-items: flex-start; } .avatar { width: 76px; height: 76px; } dl { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main id="app" v-cloak>
+    <h1>Thông tin sinh viên</h1>
+    <p class="subtitle">Bài thực hành Vue.js - Bài 1</p>
+
+    <section class="card" aria-label="Thẻ sinh viên">
+      <div class="profile">
+        <img class="avatar" v-bind:src="sinhVien.anh" v-bind:alt="sinhVien.moTaAnh">
+        <div>
+          <h2>{{ sinhVien.hoTen }}</h2>
+          <p class="id">Mã sinh viên: {{ sinhVien.ma }}</p>
+        </div>
+      </div>
+
+      <dl>
+        <div><dt>Lớp</dt><dd v-text="sinhVien.lop"></dd></div>
+        <div><dt>Điểm trung bình</dt><dd>{{ sinhVien.diemTrungBinh }}</dd></div>
+        <div>
+          <dt>Xếp loại</dt>
+          <dd :class="{ excellent: sinhVien.diemTrungBinh >= 8, good: sinhVien.diemTrungBinh >= 6.5 && sinhVien.diemTrungBinh < 8, average: sinhVien.diemTrungBinh >= 5 && sinhVien.diemTrungBinh < 6.5, poor: sinhVien.diemTrungBinh < 5 }">
+            <span v-if="sinhVien.diemTrungBinh >= 8">Giỏi</span>
+            <span v-else-if="sinhVien.diemTrungBinh >= 6.5">Khá</span>
+            <span v-else-if="sinhVien.diemTrungBinh >= 5">Trung bình</span>
+            <span v-else>Chưa đạt</span>
+          </dd>
+        </div>
+        <div><dt>Trạng thái</dt><dd>{{ sinhVien.dangHoc ? 'Đang học' : 'Đã nghỉ' }}</dd></div>
+      </dl>
+
+      <button type="button" @click="hienGioiThieu = !hienGioiThieu" :aria-expanded="hienGioiThieu" aria-controls="gioi-thieu">
+        {{ hienGioiThieu ? 'Ẩn giới thiệu' : 'Hiện giới thiệu' }}
+      </button>
+      <p id="gioi-thieu" class="intro" v-show="hienGioiThieu">Xin chào! Tôi là {{ sinhVien.hoTen }}, sinh viên lớp <span v-text="sinhVien.lop"></span>.</p>
+    </section>
+  </main>
+  <script>
+    Vue.createApp({
+      data() {
+        return {
+          sinhVien: {
+            ma: '23001871',
+            hoTen: 'Phạm Duy Hải',
+            lop: 'Công nghệ thông tin',
+            anh: 'avatar.svg',
+            moTaAnh: 'Ảnh đại diện sinh viên Phạm Duy Hải',
+            diemTrungBinh: 8.2,
+            dangHoc: true
+          },
+          hienGioiThieu: true
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
+
+

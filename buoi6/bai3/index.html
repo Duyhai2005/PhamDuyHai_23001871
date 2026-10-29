@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 3 - Quản lý công việc cá nhân</title>
+  <script src="https://unpkg.com/vue@3.5.44/dist/vue.global.prod.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 16px; background: #f2f5f9; color: #1e293b; font: 16px/1.5 Arial, sans-serif; }
+    main { max-width: 680px; margin: 0 auto; padding: 28px; border-radius: 14px; background: white; box-shadow: 0 8px 28px #1e293b18; }
+    h1 { margin: 0 0 6px; font-size: 1.7rem; }
+    p { color: #64748b; }
+    form { display: flex; gap: 10px; margin: 24px 0; }
+    input[type=text] { flex: 1; min-width: 0; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 7px; font: inherit; }
+    button { padding: 10px 14px; border: 0; border-radius: 7px; background: #2563eb; color: white; font: inherit; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .filters button { background: #e8eef7; color: #334155; }
+    .filters button.active { background: #2563eb; color: white; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+    li label { flex: 1; min-width: 0; overflow-wrap: anywhere; cursor: pointer; }
+    li input { width: 18px; height: 18px; accent-color: #2563eb; }
+    .done { text-decoration: line-through; color: #94a3b8; }
+    .delete { background: #fee2e2; color: #b91c1c; }
+    .delete:hover { background: #fecaca; }
+    .empty { padding: 20px 0; text-align: center; }
+    .footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 20px; }
+    .footer p { margin: 0; }
+    .clear { background: #475569; }
+    .clear:hover { background: #334155; }
+    .clear:disabled { background: #cbd5e1; cursor: not-allowed; }
+    [v-cloak] { display: none; }
+    @media (max-width: 480px) { main { padding: 20px; } form { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <main id="app" v-cloak>
+    <h1>Quản lý công việc cá nhân</h1>
+    <p>Thêm và theo dõi những việc cần làm của bạn.</p>
+
+    <form @submit.prevent="addTask">
+      <input v-model="newTask" type="text" aria-label="Tên công việc" placeholder="Nhập công việc cần làm...">
+      <button type="submit">Thêm công việc</button>
+    </form>
+
+    <div class="filters" aria-label="Lọc công việc">
+      <button type="button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="filter = 'all'">Tất cả</button>
+      <button type="button" :class="{ active: filter === 'pending' }" :aria-pressed="filter === 'pending'" @click="filter = 'pending'">Chưa hoàn thành</button>
+      <button type="button" :class="{ active: filter === 'completed' }" :aria-pressed="filter === 'completed'" @click="filter = 'completed'">Đã hoàn thành</button>
+    </div>
+
+    <p v-if="tasks.length === 0" class="empty">Chưa có công việc nào. Hãy thêm công việc mới!</p>
+    <p v-else-if="filteredTasks.length === 0" class="empty">Không có công việc phù hợp với bộ lọc.</p>
+    <ul v-else>
+      <li v-for="task in filteredTasks" :key="task.id">
+        <input type="checkbox" :id="'task-' + task.id" v-model="task.completed">
+        <label :for="'task-' + task.id" :class="{ done: task.completed }">{{ task.name }}</label>
+        <button type="button" class="delete" :aria-label="'Xóa ' + task.name" @click="deleteTask(task.id)">Xóa</button>
+      </li>
+    </ul>
+
+    <div class="footer">
+      <p>Tổng số: <strong>{{ totalTasks }}</strong> · Chưa hoàn thành: <strong>{{ remainingTasks }}</strong></p>
+      <button type="button" class="clear" :disabled="totalTasks === remainingTasks" @click="clearCompleted">Xóa việc đã hoàn thành</button>
+    </div>
+  </main>
+  <script>
+    Vue.createApp({
+      data() {
+        return { newTask: '', tasks: [], filter: 'all', nextId: 1 };
+      },
+      computed: {
+        totalTasks() { return this.tasks.length; },
+        remainingTasks() { return this.tasks.filter(task => !task.completed).length; },
+        filteredTasks() {
+          if (this.filter === 'pending') return this.tasks.filter(task => !task.completed);
+          if (this.filter === 'completed') return this.tasks.filter(task => task.completed);
+          return this.tasks;
+        }
+      },
+      methods: {
+        addTask() {
+          const name = this.newTask.trim();
+          if (!name) return;
+          this.tasks.push({ id: this.nextId++, name, completed: false });
+          this.newTask = '';
+        },
+        deleteTask(id) { this.tasks = this.tasks.filter(task => task.id !== id); },
+        clearCompleted() { this.tasks = this.tasks.filter(task => !task.completed); }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
+
+
+
