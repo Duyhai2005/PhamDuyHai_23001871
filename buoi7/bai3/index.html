@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 3 - Giỏ hàng</title>
+  <script src="https://unpkg.com/vue@3.5.44/dist/vue.global.prod.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 16px; background: #f2f5f9; color: #1e293b; font: 16px/1.5 Arial, sans-serif; }
+    main { max-width: 900px; margin: 0 auto; padding: 26px; border-radius: 14px; background: white; box-shadow: 0 8px 28px #1e293b18; }
+    h1 { margin: 0 0 5px; font-size: 1.8rem; }
+    .intro { margin: 0 0 22px; color: #64748b; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background: #f8fafc; color: #475569; }
+    button { padding: 7px 11px; border: 0; border-radius: 7px; background: #e8eef7; color: #24354d; font: inherit; font-weight: 600; cursor: pointer; }
+    button:hover:not(:disabled) { background: #dbe5f3; }
+    button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+    button:disabled { color: #94a3b8; cursor: not-allowed; }
+    button.delete { background: #fee2e2; color: #b91c1c; }
+    button.delete:hover { background: #fecaca; }
+    .quantity { display: flex; align-items: center; gap: 8px; }
+    .quantity-value { min-width: 24px; text-align: center; font-weight: 700; }
+    .empty { padding: 30px 12px; text-align: center; color: #64748b; }
+    .summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-top: 20px; padding: 16px; border-radius: 9px; background: #eef3ff; }
+    .summary strong { color: #234ab0; }
+    [v-cloak] { display: none; }
+    @media (max-width: 560px) { body { padding: 18px 10px; } main { padding: 18px; } }
+  </style>
+</head>
+<body>
+  <main id="app" v-cloak>
+    <h1>Giỏ hàng</h1>
+    <p class="intro">Component con hiển thị từng sản phẩm và gửi yêu cầu thay đổi về component cha.</p>
+
+    <p v-if="gioHang.length === 0" class="empty">Giỏ hàng trống</p>
+    <div v-else class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th><th>Thao tác</th></tr>
+        </thead>
+        <tbody>
+          <tr is="vue:dong-gio-hang"
+            v-for="sanPham in gioHang"
+            :key="sanPham.id"
+            :san-pham="sanPham"
+            @doi-so-luong="doiSoLuong"
+            @yeu-cau-xoa="xoaSanPham">
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="summary">
+      <span>Tổng số lượng: <strong>{{ tongSoLuong }}</strong></span>
+      <span>Tổng tiền: <strong>{{ dinhDangTien(tongTien) }}</strong></span>
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

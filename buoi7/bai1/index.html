@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 1 - Danh sách sản phẩm</title>
+  <script src="https://unpkg.com/vue@3.5.44/dist/vue.global.prod.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 16px; background: #f2f5f9; color: #1e293b; font: 16px/1.5 Arial, sans-serif; }
+    main { max-width: 1040px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 1.8rem; }
+    .intro, .muted { color: #64748b; }
+    .intro { margin: 0 0 20px; }
+    .card { margin-bottom: 18px; padding: 22px; border-radius: 14px; background: white; box-shadow: 0 8px 28px #1e293b14; }
+    .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    label { display: block; margin-bottom: 5px; font-weight: 600; }
+    input, select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 7px; background: white; color: inherit; font: inherit; }
+    input:focus, select:focus, button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+    button { padding: 9px 14px; border: 0; border-radius: 7px; background: #2563eb; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    button.delete { padding: 6px 10px; background: #fee2e2; color: #b91c1c; }
+    button.delete:hover { background: #fecaca; }
+    .form-grid { margin-bottom: 14px; }
+    .form-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .error { color: #b91c1c; }
+    .notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 7px; background: #fff7ed; color: #9a3412; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background: #f8fafc; color: #475569; }
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: .88rem; font-weight: 600; }
+    .in-stock { background: #dcfce7; color: #166534; }
+    .out-stock { background: #fee2e2; color: #991b1b; }
+    .empty { padding: 18px 0; text-align: center; color: #64748b; }
+    .summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-top: 16px; }
+    .summary strong { color: #1d4ed8; }
+    [v-cloak] { display: none; }
+    @media (max-width: 680px) { body { padding: 22px 12px; } .controls, .form-grid { grid-template-columns: 1fr; } .card { padding: 17px; } }
+  </style>
+</head>
+<body>
+  <main id="app" v-cloak>
+    <h1>Danh sách sản phẩm</h1>
+    <p class="intro">Tìm kiếm, lọc, sắp xếp và quản lý sản phẩm. Trạng thái trang: <strong>{{ trangThai }}</strong></p>
+
+    <section class="card" aria-label="Tìm và lọc sản phẩm">
+      <div class="controls">
+        <div>
+          <label for="tu-khoa">Tìm theo tên</label>
+          <input id="tu-khoa" v-model="tuKhoa" type="search" placeholder="Nhập tên sản phẩm">
+        </div>
+        <div>
+          <label for="danh-muc">Danh mục</label>
+          <select id="danh-muc" v-model="danhMucChon">
+            <option value="tat-ca">Tất cả danh mục</option>
+            <option v-for="danhMuc in danhMuc" :key="danhMuc" :value="danhMuc">{{ danhMuc }}</option>
+          </select>
+        </div>
+        <div>
+          <label for="sap-xep">Sắp xếp theo giá</label>
+          <select id="sap-xep" v-model="sapXep">
+            <option value="gia-tang">Giá tăng dần</option>
+            <option value="gia-giam">Giá giảm dần</option>
+          </select>
+        </div>
+      </div>
+      <p v-if="thongBaoTimKiem" class="notice" role="status">{{ thongBaoTimKiem }}</p>
+    </section>
+
+    <section class="card" aria-label="Thêm sản phẩm">
+      <h2>Thêm sản phẩm mới</h2>
+      <form @submit.prevent="themSanPham">
+        <div class="form-grid">
+          <div>
+            <label for="ten-moi">Tên sản phẩm</label>
+            <input id="ten-moi" v-model.trim="sanPhamMoi.ten" type="text" placeholder="Ví dụ: Chuột không dây">
+          </div>
+          <div>
+            <label for="gia-moi">Giá (đồng)</label>
+            <input id="gia-moi" v-model.number="sanPhamMoi.gia" type="number" min="0.01" step="any">
+          </div>
+          <div>
+            <label for="danh-muc-moi">Danh mục</label>
+            <select id="danh-muc-moi" v-model="sanPhamMoi.danhMuc">
+              <option v-for="danhMuc in danhMuc" :key="danhMuc" :value="danhMuc">{{ danhMuc }}</option>
+            </select>
+          </div>
+          <div>
+            <label for="ton-kho-moi">Số lượng tồn</label>
+            <input id="ton-kho-moi" v-model.number="sanPhamMoi.tonKho" type="number" min="0" step="1">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit">Thêm sản phẩm</button>
+          <span v-if="loiThem" class="error" role="alert">{{ loiThem }}</span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" aria-label="Bảng sản phẩm">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Mã</th><th>Tên sản phẩm</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Trạng thái</th><th>Thao tác</th></tr>
+          </thead>
+          <tbody v-if="sanPhamHienThi.length">
+            <tr v-for="sanPham in sanPhamHienThi" :key="sanPham.id">
+              <td>{{ sanPham.id }}</td>
+              <td>{{ sanPham.ten }}</td>
+              <td>{{ sanPham.danhMuc }}</td>
+              <td>{{ dinhDangTien(sanPham.gia) }}</td>
+              <td>{{ sanPham.tonKho }}</td>
+              <td><span class="badge" :class="sanPham.tonKho > 0 ? 'in-stock' : 'out-stock'">{{ sanPham.tonKho > 0 ? 'Còn hàng' : 'Hết hàng' }}</span></td>
+              <td><button class="delete" type="button" @click="xoaSanPham(sanPham.id)">Xóa</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="sanPhamHienThi.length === 0" class="empty">Không có sản phẩm phù hợp với tìm kiếm và bộ lọc.</p>
+      </div>
+      <div class="summary">
+        <span>Đang hiển thị <strong>{{ soSanPhamHienThi }}</strong> / {{ sanPham.length }} sản phẩm</span>
+        <span>Tổng giá trị tồn kho: <strong>{{ dinhDangTien(tongGiaTriTonKho) }}</strong></span>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
