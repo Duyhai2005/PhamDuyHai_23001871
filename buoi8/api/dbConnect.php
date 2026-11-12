@@ -8,10 +8,11 @@ function getConnection()
         return $connection;
     }
 
-    $host = 'localhost';
-    $database = 'thuc_hanh_8';
-    $username = 'root';
-    $password = '';
+    // Allow environment overrides for CI/deployment while keeping local defaults.
+    $host = getenv('DB_HOST') ?: 'localhost';
+    $database = getenv('DB_NAME') ?: 'thuc_hanh_8';
+    $username = getenv('DB_USER') ?: 'root';
+    $password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
 
     try {
         $connection = new PDO(
