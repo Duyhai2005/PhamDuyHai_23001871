@@ -35,7 +35,10 @@ function getProductInput()
     $price = $input['price'] ?? null;
     $stock = $input['stock'] ?? null;
 
-    if (mb_strlen($name, 'UTF-8') < 1 || mb_strlen($name, 'UTF-8') > 100) {
+    preg_match_all('/./us', $name, $nameCharacters);
+    $nameLength = count($nameCharacters[0]);
+
+    if ($nameLength < 1 || $nameLength > 100) {
         sendResponse(false, null, 'Tên sản phẩm phải có từ 1 đến 100 ký tự.', 400);
     }
 
