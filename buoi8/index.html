@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài thực hành 8 - Quản lý sản phẩm</title>
+  <script src="https://unpkg.com/vue@3.5.44/dist/vue.global.prod.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 16px; background: #f2f5f9; color: #1e293b; font: 16px/1.5 Arial, sans-serif; }
+    main { max-width: 900px; margin: 0 auto; }
+    .card { margin-bottom: 18px; padding: 22px; border-radius: 14px; background: white; box-shadow: 0 8px 28px #1e293b14; }
+    h1 { margin: 0 0 18px; font-size: 1.8rem; }
+    h2 { margin: 0 0 16px; font-size: 1.25rem; }
+    .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    label { display: block; margin-bottom: 5px; font-weight: 600; }
+    input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 7px; font: inherit; }
+    button { padding: 9px 14px; border: 0; border-radius: 7px; background: #2563eb; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #e8eef7; color: #24354d; }
+    button.delete { background: #fee2e2; color: #b91c1c; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+    .actions { display: flex; gap: 8px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background: #f8fafc; color: #475569; }
+    .notice { margin: 0 0 16px; color: #166534; }
+    .error { margin: 0 0 16px; color: #b91c1c; }
+    .empty { padding: 18px 0; text-align: center; color: #64748b; }
+    [v-cloak] { display: none; }
+    @media (max-width: 650px) {
+      body { padding: 22px 12px; }
+      .card { padding: 17px; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main id="app" v-cloak>
+    <h1>Quản lý sản phẩm</h1>
+
+    <section class="card">
+      <h2>{{ dangSua ? 'Sửa sản phẩm' : 'Thêm sản phẩm' }}</h2>
+      <form @submit.prevent="luuSanPham">
+        <div class="form-grid">
+          <div>
+            <label for="name">Tên sản phẩm</label>
+            <input id="name" v-model="sanPham.name" type="text" maxlength="100" required>
+          </div>
+          <div>
+            <label for="price">Đơn giá (đồng)</label>
+            <input id="price" v-model.number="sanPham.price" type="number" min="1" step="1" required>
+          </div>
+          <div>
+            <label for="stock">Số lượng tồn</label>
+            <input id="stock" v-model.number="sanPham.stock" type="number" min="0" step="1" required>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">Lưu</button>
+          <button v-if="dangSua" class="secondary" type="button" @click="lamMoi">Hủy</button>
+        </div>
+      </form>
+    </section>
+
+    <p v-if="thongBao" class="notice" role="status">{{ thongBao }}</p>
+    <p v-if="loi" class="error" role="alert">{{ loi }}</p>
+
+    <section class="card">
+      <h2>Danh sách sản phẩm</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tên sản phẩm</th>
+              <th>Đơn giá</th>
+              <th>Số lượng tồn</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody v-if="sanPhamList.length">
+            <tr v-for="item in sanPhamList" :key="item.id">
+              <td>{{ item.name }}</td>
+              <td>{{ dinhDangTien(item.price) }}</td>
+              <td>{{ item.stock }}</td>
+              <td>
+                <div class="actions">
+                  <button type="button" @click="suaSanPham(item)">Sửa</button>
+                  <button class="delete" type="button" @click="xoaSanPham(item.id)">Xóa</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="sanPhamList.length === 0" class="empty">Chưa có sản phẩm.</p>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
