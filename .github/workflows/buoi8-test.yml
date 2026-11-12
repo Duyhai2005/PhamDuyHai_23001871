@@ -1,0 +1,114 @@
+name: Buoi 8 API tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "buoi8/**"
+      - ".github/workflows/buoi8-test.yml"
+  pull_request:
+    paths:
+      - "buoi8/**"
+      - ".github/workflows/buoi8-test.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: thuc_hanh_8
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: pdo_mysql
+          coverage: none
+
+      - name: Check PHP syntax
+        run: |
+          php -l buoi8/api/dbConnect.php
+          php -l buoi8/api/products.php
+
+      - name: Prepare database
+        run: mysql -h 127.0.0.1 -uroot -proot < buoi8/database.sql
+
+      - name: Start PHP server
+        run: |
+          php -S 127.0.0.1:8000 -t buoi8 > /tmp/buoi8-php.log 2>&1 &
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:8000/api/products.php > /tmp/initial.json; then
+              break
+            fi
+            sleep 1
+          done
+          cat /tmp/initial.json
+          jq -e '.success == true and (.data | length >= 3)' /tmp/initial.json
+
+      - name: Test product CRUD API
+        run: |
+          BASE="http://127.0.0.1:8000/api/products.php"
+
+          # Create
+          CREATE=$(curl -sS -X POST "$BASE" -H "Content-Type: application/json" \
+            -d '{"name":"GitHub CI test","price":25000,"stock":7}' -w '\n%{http_code}')
+          BODY=$(echo "$CREATE" | sed '$d')
+          STATUS=$(echo "$CREATE" | tail -n1)
+          test "$STATUS" = "201"
+          ID=$(echo "$BODY" | jq -r '.data.id')
+          test "$ID" != "null"
+          echo "Created product ID: $ID"
+
+          # Read and verify created product
+          curl -fsS "$BASE" | jq -e --arg name "GitHub CI test" \
+            '.success == true and any(.data[]; .name == $name and .price == 25000 and .stock == 7)'
+
+          # Update
+          UPDATE=$(curl -sS -X PUT "$BASE?id=$ID" -H "Content-Type: application/json" \
+            -d '{"name":"Updated by CI","price":30000,"stock":9}' -w '\n%{http_code}')
+          test "$(echo "$UPDATE" | tail -n1)" = "200"
+          curl -fsS "$BASE" | jq -e --argjson id "$ID" \
+            'any(.data[]; .id == $id and .name == "Updated by CI" and .price == 30000 and .stock == 9)'
+
+          # Delete
+          DELETE=$(curl -sS -X DELETE "$BASE?id=$ID" -w '\n%{http_code}')
+          test "$(echo "$DELETE" | tail -n1)" = "200"
+          curl -fsS "$BASE" | jq -e --argjson id "$ID" 'all(.data[]; .id != $id)'
+
+          # Invalid input: empty name
+          INVALID=$(curl -sS -X POST "$BASE" -H "Content-Type: application/json" \
+            -d '{"name":"   ","price":100,"stock":1}' -w '\n%{http_code}')
+          test "$(echo "$INVALID" | tail -n1)" = "400"
+
+          # Invalid input: negative price
+          INVALID=$(curl -sS -X POST "$BASE" -H "Content-Type: application/json" \
+            -d '{"name":"Invalid price","price":-1,"stock":1}' -w '\n%{http_code}')
+          test "$(echo "$INVALID" | tail -n1)" = "400"
+
+          # Invalid input: negative stock
+          INVALID=$(curl -sS -X POST "$BASE" -H "Content-Type: application/json" \
+            -d '{"name":"Invalid stock","price":100,"stock":-1}' -w '\n%{http_code}')
+          test "$(echo "$INVALID" | tail -n1)" = "400"
+
+          # Invalid ID and missing ID
+          INVALID=$(curl -sS -X DELETE "$BASE?id=abc" -w '\n%{http_code}')
+          test "$(echo "$INVALID" | tail -n1)" = "400"
+          INVALID=$(curl -sS -X DELETE "$BASE?id=999999" -w '\n%{http_code}')
+          test "$(echo "$INVALID" | tail -n1)" = "404"
+
+          echo "All Buoi 8 API tests passed."
